@@ -1,6 +1,6 @@
-const Users = require('../models/userModels')
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const Users = require("../models/userModels");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const userController = {
   register: async (req, res) => {
@@ -73,24 +73,20 @@ const userController = {
   },
   refreshToken: (req, res) => {
     try {
-      const refresh_token = req.cookies.refreshToken;
-      if (!refresh_token) {
+      const rf_token = req.cookies.refreshToken;
+      if (!rf_token)
         return res.status(400).json({ msg: "Please Login or Register" });
-      }
-      jwt.verify(
-        refresh_token,
-        process.env.REFRESH_TOKEN_SECRET,
-        (err, user) => {
-          if (err) {
-            return res.status(400).json({ msg: "Please Login or Register" });
-          }
-          const accessToken = createAccessToken({ id: user.id });
 
-          res.json({ accessToken });
-        }
-      );
-    } catch (error) {
-      return res.status(500).json({ error: error.message });
+      jwt.verify(rf_token, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+        if (err)
+          return res.status(400).json({ msg: "Please Login or Register" });
+
+        const accessToken = createAccessToken({ id: user.id });
+
+        res.json({ accessToken });
+      });
+    } catch (err) {
+      return res.status(500).json({ msg: err.message });
     }
   },
   getUser: async (req, res) => {
@@ -129,12 +125,12 @@ const userController = {
     } catch (err) {
       return res.status(500).json({ msg: err.message });
     }
-  }
+  },
 };
 
 const createAccessToken = (user) => {
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn : '1d'});
-}
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1d" });
+};
 
 const createRefreshToken = (user) => {
   return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });

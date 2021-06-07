@@ -38,6 +38,10 @@ mongoose.connect(url, {
 
 const _port = process.env.PORT || 5000;
 
+app.get("/", (req, res) => {
+  res.send("e-commerse server");
+});
+
 app.listen(_port, () => {
     console.log(`server is running on ${_port}`);
 })

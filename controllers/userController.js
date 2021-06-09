@@ -1,8 +1,9 @@
-const Users = require("../models/userModels");
+const Users = require("../models/userModel");
+const Payments = require("../models/paymentModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const userController = {
+const userCtrl = {
   register: async (req, res) => {
     try {
       const { name, email, password } = req.body;
@@ -12,24 +13,20 @@ const userController = {
           .status(400)
           .json({ msg: "The email address is already exists" });
       }
-      if (password.length < 6) {
+      if (password.length <= 5) {
         return res
           .status(400)
           .json({ msg: "password must be at least 6 characters" });
       }
       const passwordHash = await bcrypt.hash(password, 15);
-      const newUser = new Users({
-        name,
-        email,
-        password: passwordHash,
-      });
+      const newUser = new Users({ name, email, password: passwordHash });
       // database save
       await newUser.save();
       // Then create jsonwebtoken to authentication
       const accessToken = createAccessToken({ id: newUser._id });
-      const refreshToken = createRefreshToken({ id: newUser._id });
+      const refresh_Token = createRefreshToken({ id: newUser._id });
 
-      res.cookie("refreshToken", refreshToken, {
+      res.cookie("refreshToken", refresh_Token, {
         httpOnly: true,
         path: "/user/refresh_token",
       });
@@ -47,13 +44,14 @@ const userController = {
         return res.status(400).json({ msg: "User does not exist." });
       }
       const isMatch = await bcrypt.compare(password, user.password);
+
       if (!isMatch) {
-        res.status(400).json({ msg: "Incorrect password." });
+        return res.status(400).json({ msg: "Incorrect password." });
       }
       const accessToken = createAccessToken({ id: user._id });
-      const refreshToken = createRefreshToken({ id: user._id });
+      const refresh_Token = createRefreshToken({ id: user._id });
 
-      res.cookie("refreshToken", refreshToken, {
+      res.cookie("refreshToken", refresh_Token, {
         httpOnly: true,
         path: "/user/refresh_token",
       });
@@ -65,7 +63,11 @@ const userController = {
   },
   logout: (req, res) => {
     try {
-      res.clearCookie("refreshToken", { path: "/user/refresh_token" });
+      // res.clearCookie("refreshToken", { path: "/user/refresh_token" });
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        path: "/user/refresh_token",
+      });
       return res.json({ msg: "Logged out" });
     } catch (err) {
       return res.status(500).json({ msg: err.message });
@@ -73,20 +75,25 @@ const userController = {
   },
   refreshToken: (req, res) => {
     try {
-      const rf_token = req.cookies.refreshToken;
-      if (!rf_token)
-        return res.status(400).json({ msg: "Please Login or Register" });
-
-      jwt.verify(rf_token, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-        if (err)
-          return res.status(400).json({ msg: "Please Login or Register" });
+      const ref_token = req.cookies.refresh_Token;
+      if (!ref_token) {
+        return res
+          .status(400)
+          .json({ msg: "Please Login or Register for refresh token" });
+      }
+      jwt.verify(ref_token, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+        if (err) {
+          return res
+            .status(400)
+            .json({ msg: "Please Login or Register for token verify" });
+        }
 
         const accessToken = createAccessToken({ id: user.id });
 
         res.json({ accessToken });
       });
-    } catch (err) {
-      return res.status(500).json({ msg: err.message });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
     }
   },
   getUser: async (req, res) => {
@@ -136,4 +143,4 @@ const createRefreshToken = (user) => {
   return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
 };
 
-module.exports = userController;
+module.exports = userCtrl;

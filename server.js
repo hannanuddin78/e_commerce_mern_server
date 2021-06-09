@@ -8,6 +8,7 @@ const userRout = require("./routes/userRouter");
 const categoryRout = require("./routes/categoryRouter");
 const uploadImg = require("./routes/uploadImage");
 const productRout = require("./routes/productRouter");
+const paymentRouter = require("./routes/paymentRouter");
 
 const app = express();
 app.use(express.json());
@@ -23,6 +24,7 @@ app.use("/user", userRout);
 app.use("/api", categoryRout);
 app.use("/api", uploadImg);
 app.use("/api", productRout);
+app.use("/api", paymentRouter);
 
 const url = process.env.DATABASE_URL;
 
